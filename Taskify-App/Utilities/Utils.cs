@@ -1,5 +1,6 @@
 ﻿using System.Net.Mail;
 using Spectre.Console;
+using Taskify_App.Enums;
 public static class Utils
 {
     public static void DisplayInConsole(string message, ConsoleColor color)
@@ -17,7 +18,18 @@ public static class Utils
         .PageSize(50)
         .MoreChoicesText("[grey](Move up and down to reveal more fruits)[/]")
         .AddChoices(choices));
-        return userOption;
+        return userOption.Replace(" ", "");
+    }
+
+    public static ProjectCategories GetProjectCategory(string heading)
+    {
+        var projectCategoriesOption = AnsiConsole.Prompt(
+         new SelectionPrompt<ProjectCategories>()
+        .Title(heading)
+        .PageSize(50)
+        .MoreChoicesText("[grey](Move up and down to reveal more fruits)[/]")
+        .AddChoices((IEnumerable<ProjectCategories>)Enum.GetValues(typeof(ProjectCategories))));
+        return projectCategoriesOption;
     }
 
     public static string GetUserName()
@@ -132,6 +144,77 @@ public static class Utils
         catch (FormatException)
         {
             return false;
+        }
+    }
+
+    public static string GetTaskName(string taskName)
+    {
+        while (true)
+        {
+            Console.Write($"Enter the {taskName} name: ");
+            string? name = Console.ReadLine();
+            if (name != null && name.Trim() != "")
+            {
+                return name;
+            }
+            Console.WriteLine("Invalid User Name!! User name can't be empty.");
+        }
+    }
+
+    public static string GetDescription(string taskName)
+    {
+        Console.Write($"Enter the {taskName} Description");
+        string? description = Console.ReadLine();
+        if (description == null || description.Trim() == "")
+        {
+            return "-";
+        }
+        return description;
+    }
+
+    public static int GetTimeLimit()
+    {
+        while (true)
+        {
+            Console.Write($"Enter the time limit in Hrs: ");
+            if (int.TryParse(Console.ReadLine(), out var timeLimit) && timeLimit > 0 && timeLimit < 100)
+            {
+                return timeLimit;
+            }
+            Console.WriteLine("Invalid Time limit!! Time limit can be [0,100] range!! Try Again");
+        }
+    }
+
+    public static string GetActivityNameToUpdate()
+    {
+        Console.Write("Enter the Activity name to be updated : ");
+        string? activityName = Console.ReadLine();
+        return (activityName == null) ? "" : activityName;
+    }
+
+    public static string GetActivityDescriptionToUpdate()
+    {
+        Console.Write("Enter the Activity Description to be updated");
+        string? activityDescription = Console.ReadLine();
+        return (activityDescription == null) ? "" : activityDescription;
+    }
+
+    public static int GetActivityTimeLimitToUpdate()
+    {
+        Console.Write("Enter the Activity Time Limit : ");
+        string? timeLimit = Console.ReadLine();
+        if (timeLimit == null || timeLimit == "")
+        {
+            return -1;
+        }
+
+        while (true)
+        {
+            if (int.TryParse(timeLimit, out int activityTimeLimit) && activityTimeLimit > 0 && activityTimeLimit < 100)
+            {
+                return activityTimeLimit;
+            }
+            Console.WriteLine("Invalid Pls try again...");
         }
     }
 }

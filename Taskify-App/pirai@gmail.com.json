@@ -1,0 +1,16 @@
+[
+  {
+    "ProjectName": "projectA",
+    "ProjectCategory": 2,
+    "ProjectDescription": "",
+    "Activities": [
+      {
+        "TaskName": "Task1",
+        "TaskDescription": "",
+        "TimeStamps": [],
+        "TimeLimit": 10,
+        "TotalTimeTaken": 0
+      }
+    ]
+  }
+]

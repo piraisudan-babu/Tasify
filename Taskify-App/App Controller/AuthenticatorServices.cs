@@ -1,4 +1,5 @@
-﻿using Taskify_App.Models;
+﻿using Taskify_App.App_Controller;
+using Taskify_App.Models;
 using Taskify_App.Repository;
 
 namespace Taskify_App
@@ -7,12 +8,14 @@ namespace Taskify_App
     {
         private UserRepository _userRepository;
         private List<User> Users;
+        private ProjectService _projectService;
 
-        public AuthenticatorServices(UserRepository userRepository)
+        public AuthenticatorServices(UserRepository userRepository, ProjectService projectService)
         {
             _userRepository = userRepository;
             List<User>? users = _userRepository.GetUsers();
             Users = (users == null) ? new List<User>() : users;
+            _projectService = projectService;
         }
 
         public bool IsEmailIDFound(string emailID)
@@ -25,6 +28,7 @@ namespace Taskify_App
             User user = Users.Where(user => user.EmailID.Equals(emailID)).First();
             if (IsSamePasswords(user.Password, password))
             {
+                _projectService.SetProjects(emailID);
                 return true;
             }
             return false;
@@ -35,6 +39,7 @@ namespace Taskify_App
             User newUser = new User(userName, emailID, BCrypt.Net.BCrypt.HashPassword(password));
             Users.Add(newUser);
             _userRepository.UpdateUsers(Users);
+            _projectService.SetProjects(emailID);
         }
 
         private bool IsSamePasswords(string expectedPassword, string actualPassword)

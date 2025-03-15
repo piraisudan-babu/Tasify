@@ -1,4 +1,6 @@
 ﻿using Taskify_App.Enums;
+using Taskify_App.Repository;
+using Taskify_App.User_Interaction;
 using Taskify_App.Utilities;
 
 namespace Taskify_App
@@ -6,9 +8,11 @@ namespace Taskify_App
     public class Authenticator
     {
         private AuthenticatorServices _authenticatorServices;
-        public Authenticator(AuthenticatorServices authenticatorServices)
+        private AppUI _appUI;
+        public Authenticator(AuthenticatorServices authenticatorServices, AppUI appUI)
         {
             _authenticatorServices = authenticatorServices;
+            _appUI = appUI;
         }
 
         public void DisplayAuthenticationMenu()
@@ -24,6 +28,7 @@ namespace Taskify_App
                             if (LoginUser())
                             {
                                 Utils.DisplayInConsole("Login successfully!!!", Constants.YellowColor);
+                                _appUI.DisplayOperations();
                             }
                             else
                             {
@@ -35,6 +40,7 @@ namespace Taskify_App
                             if (RegisterUser())
                             {
                                 Utils.DisplayInConsole("User register successfully!!!", Constants.YellowColor);
+                                _appUI.DisplayOperations();
                             }
                             else
                             {
