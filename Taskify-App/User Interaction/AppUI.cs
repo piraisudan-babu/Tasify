@@ -34,6 +34,7 @@ namespace Taskify_App.User_Interaction
                             break;
 
                         case TaskOperations.TimeTracker:
+                            TimeTracker();
                             break;
 
                         case TaskOperations.Logout:
@@ -125,6 +126,22 @@ namespace Taskify_App.User_Interaction
                 return false;
             }
             _projectService.SetTasks(selectedProject);
+            return true;
+        }
+
+        private bool? SelectTask()
+        {
+            List<string> availableTasks = _projectService.GetActivitiesName().ToList();
+            availableTasks.Add("Exit");
+            string selectedTask = Utils.GetUserChoice(availableTasks.ToArray(), "Select Task");
+            if (selectedTask == "Exit")
+            {
+                return false;
+            }
+            if (!_projectService.SetCurrentTask(selectedTask))
+            {
+                return null;
+            }
             return true;
         }
 
@@ -241,6 +258,52 @@ namespace Taskify_App.User_Interaction
                 return true;
             }
             return false;
+        }
+
+        private void TimeTracker()
+        {
+            SelectProject();
+            bool? isTaskSelected = SelectTask();
+            if (isTaskSelected == null)
+            {
+                Utils.DisplayInConsole($"Already - {_projectService.GetProjectsName()} is running in background Pls stop it to continue.", ConsoleColor.Green );
+            }
+            else if (isTaskSelected == true)
+            {
+                if (Enum.TryParse(Utils.GetUserChoice(new[] { "Start", "Stop", "Exit" }, "Select Status of the ."),
+                    true, out ActivityStatus activityStatus))
+                {
+                    switch (activityStatus)
+                    {
+                        case ActivityStatus.Start:
+                            _projectService.SetStartTime();
+                            break;
+
+                        case ActivityStatus.Stop:
+                            if (!_projectService.SetStopTime())
+                            {
+                                Utils.DisplayInConsole("The Task is not started First start the task", ConsoleColor.Green );
+                            }
+                            else
+                            {
+                                Utils.DisplayInConsole("Stopped...", ConsoleColor.Green);
+                            }
+                            break;
+
+                        case ActivityStatus.Exit:
+                            Utils.DisplayInConsole("Exited", ConsoleColor.Red);
+                            return;
+                    }
+                }
+                else
+                {
+                    Utils.DisplayInConsole(Constants.InvalidChoice, Constants.RedColor);
+                }
+            }
+            else
+            {
+                Utils.DisplayInConsole("Exited", ConsoleColor.Magenta);
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Taskify_App.Enums;
+﻿using System.Diagnostics;
+using Taskify_App.Enums;
 using Taskify_App.Models;
 using Taskify_App.Repository;
 
@@ -8,9 +9,13 @@ namespace Taskify_App.App_Controller
     {
         private List<Project> Projects;
         private ProjectRepository _projectRepository;
-        private List<Activity> Activities;
+        private List<Models.Activity> Activities;
         private string EmailID;
         private string ProjectName;
+        private string selectedTaskName = "";
+        private string runningTaskName = "";
+        private DateTime TaskStartTime = DateTime.MinValue;
+        private DateTime TaskEndTime = DateTime.MinValue;
 
         public ProjectService(ProjectRepository projectRepository)
         {
@@ -26,16 +31,56 @@ namespace Taskify_App.App_Controller
 
         public void SetTasks(string projectName)
         {
-            List<Activity> activities = Projects.Where(project => project.ProjectName == projectName).SelectMany(project => project.Activities).ToList();
+            List<Models.Activity> activities = Projects.Where(project => project.ProjectName == projectName).SelectMany(project => project.Activities).ToList();
             if (activities.Any())
             {
                 Activities = activities;
             }
             else
             {
-                Activities = new List<Activity>();
+                Activities = new List<Models.Activity>();
             }
             ProjectName = projectName;
+        }
+
+        public bool SetCurrentTask(string taskName)
+        {
+            if (selectedTaskName == "" && runningTaskName =="" || taskName == runningTaskName)
+            {
+                selectedTaskName = taskName;
+                return true;
+            }
+            return false;
+        }
+
+        public bool SetStartTime()
+        {
+            TaskStartTime = DateTime.Now;
+            runningTaskName = selectedTaskName;
+            return true;
+        }
+
+        public bool SetStopTime()
+        {
+            if (runningTaskName == "")
+            {
+                selectedTaskName = "";
+                return false;
+            }
+            TaskEndTime = DateTime.Now;
+            Models.Activity activity = Activities.Where(activity => activity.TaskName == runningTaskName).FirstOrDefault()!;
+            activity.TotalTimeTaken = (TaskEndTime - TaskStartTime).Hours;
+            activity.TimeStamps.Add(new[] {TaskStartTime, TaskEndTime});
+            TaskStartTime = DateTime.MinValue;
+            TaskEndTime = DateTime.MinValue;
+            runningTaskName = "";
+            selectedTaskName = "";
+            return true;
+        }
+
+        public string GetCurrentTask()
+        {
+            return selectedTaskName;
         }
 
         public string[] GetProjectsName()
@@ -53,14 +98,14 @@ namespace Taskify_App.App_Controller
             return Projects.Any(project => project.ProjectName == projectName);
         }
 
-        public void AddActivity(Activity activity)
+        public void AddActivity(Models.Activity activity)
         {
             Activities.Add(activity);
         }
 
         public void RemoveActivity(string activityName)
         {
-            Activity activity = Activities.FirstOrDefault(activity => activity.TaskName == activityName)!;
+            Models.Activity activity = Activities.FirstOrDefault(activity => activity.TaskName == activityName)!;
             Activities.Remove(activity);
         }
 
@@ -76,7 +121,7 @@ namespace Taskify_App.App_Controller
 
         public void UpdateActivity(string activityName, string activityNameToBeUpdated, string activityDescriptionToUpdated, int activityTimeLimitToBeUpdated)
         {
-            Activity activity = Activities.FirstOrDefault(activity => activity.TaskName == activityName)!;
+            Models.Activity activity = Activities.FirstOrDefault(activity => activity.TaskName == activityName)!;
             if (activityNameToBeUpdated != "")
             {
                 activity.TaskName = activityNameToBeUpdated;
@@ -101,7 +146,5 @@ namespace Taskify_App.App_Controller
             Project project = Projects.Where(project => project.ProjectName == ProjectName).FirstOrDefault()!;
             project.Activities = Activities;
         }
-
-        public 
     }
 }
