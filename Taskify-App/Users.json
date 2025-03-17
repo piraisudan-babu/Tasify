@@ -8,5 +8,15 @@
     "UserName": "manoj@gmail.com",
     "EmailID": "manoj@gmail.com",
     "Password": "$2a$11$odfdBsdmSuW4wDq929q00efbAmv8vzKaLVrklfeYmRzqUGYOkXi1W"
+  },
+  {
+    "UserName": "kriti",
+    "EmailID": "kriti123@gmail.com",
+    "Password": "$2a$11$iCStCf05Rv37CX8gsxtmJu0fUoEPcW9yitAQEVtbx4v12le145DuC"
+  },
+  {
+    "UserName": "veera",
+    "EmailID": "veera@gmail.com",
+    "Password": "$2a$11$CXJ71xv0Eqtnq5VCaboYw.A87Cf7D8Jw.SWUh.YfckzkqPXxru7.y"
   }
 ]

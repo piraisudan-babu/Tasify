@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-using Taskify_App.Enums;
-using Taskify_App.Models;
+﻿using Taskify_App.Models;
 using Taskify_App.Repository;
 
 namespace Taskify_App.App_Controller
@@ -83,9 +81,9 @@ namespace Taskify_App.App_Controller
             return selectedTaskName;
         }
 
-        public string[] GetProjectsName()
+        public List<string> GetProjectsName()
         {
-            return Projects.Select(project => project.ProjectName).ToArray();
+            return Projects.Select(project => project.ProjectName).ToList();
         } 
 
         public void CreateProject(Project project)
@@ -145,6 +143,66 @@ namespace Taskify_App.App_Controller
         {
             Project project = Projects.Where(project => project.ProjectName == ProjectName).FirstOrDefault()!;
             project.Activities = Activities;
+        }
+
+        public List<Models.Activity> GetRecentActivities()
+        {
+            if (Projects.Count == 0)
+            {
+                return [];
+            }
+            List<Models.Activity> recentActivities = new List<Models.Activity>() { null, null};
+            foreach(Project project in Projects)
+            {
+                foreach(Models.Activity activity in project.Activities)
+                {
+                    if (recentActivities[0] == null)
+                    {
+                        recentActivities[0] = activity;
+                    }
+                    else if (recentActivities[0].TimeStamps[recentActivities[0].TimeStamps.Count - 1][1] < activity.TimeStamps[activity.TimeStamps.Count - 1][1])
+                    {
+                        recentActivities[1] = recentActivities[0];
+                        recentActivities[0] = activity;
+                    }
+                    else if (recentActivities[0].TimeStamps[recentActivities[0].TimeStamps.Count - 1][1] >= activity.TimeStamps[activity.TimeStamps.Count - 1][1] && recentActivities[1].TimeStamps[recentActivities[0].TimeStamps.Count - 1][1] < activity.TimeStamps[activity.TimeStamps.Count - 1][1])
+                    {
+                        recentActivities[1] = activity;
+                    }
+                }
+            }
+            return recentActivities;
+        }
+
+        public void ExportTasks(string projectName)
+        {
+            string filePath = $"../../../{projectName}";
+            Project project = Projects.Where(project => project.ProjectName ==  projectName).FirstOrDefault()!;
+            using (StreamWriter writer = new StreamWriter(filePath))
+            {
+                writer.WriteLine("Activity Name, Activity Description, Activity TimeStamps, Activity Time Limit");
+
+                foreach(Models.Activity activity in project.Activities)
+                {
+                    writer.WriteLine($"{activity.TaskName}, {activity.TaskDescription}, {activity.TimeStamps}, {activity.TimeLimit}");
+                }
+            }
+        }
+
+        public void ExportAll()
+        {
+            string filePath = $"../../../{EmailID}";
+            using (StreamWriter writer = new StreamWriter(filePath))
+            {
+                writer.WriteLine("Project Name, Project Category, Activity Name, Activity Description");
+                foreach (Project project in Projects) 
+                {
+                    foreach (Models.Activity activity in project.Activities)
+                    {
+                        writer.WriteLine($"{project.ProjectName}, {project.ProjectCategory}, {activity.TaskName}, {activity.TaskDescription}");
+                    }
+                }
+            }
         }
     }
 }

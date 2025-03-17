@@ -17,6 +17,8 @@ namespace Taskify_App.User_Interaction
         {
             while (true)
             {
+                Utils.ClearConsole();
+                DisplayDashboard();
 
                 if (Enum.TryParse(Utils.GetUserChoice(new[] { "Task Manager", "Summary View", "Export", "Time Tracker", "Logout" }, "Select Task Operation"),
                     true, out TaskOperations taskOperations))
@@ -31,6 +33,7 @@ namespace Taskify_App.User_Interaction
                             break;
 
                         case TaskOperations.Export:
+                            ExportOptions();
                             break;
 
                         case TaskOperations.TimeTracker:
@@ -58,6 +61,7 @@ namespace Taskify_App.User_Interaction
         {
             while (true)
             {
+                Utils.ClearConsole();
                 if (Enum.TryParse(Utils.GetUserChoice(new[] { "Select Project", "Create Project", "Exit" }, "Project Choices"), true, out ProjectChoices projectChoices))
                 {
                     switch(projectChoices)
@@ -109,6 +113,7 @@ namespace Taskify_App.User_Interaction
                 return null;
             }
             ProjectCategories projectCategory = Utils.GetProjectCategory(projectName);
+            Utils.DisplayInConsole("Project Category : " + projectCategory, ConsoleColor.White);
             string projectDescription = Utils.GetDescription(projectName);
             Project newProject = new Project(projectName, projectCategory, projectDescription, new List<Activity>());
             _projectService.CreateProject(newProject);
@@ -118,6 +123,7 @@ namespace Taskify_App.User_Interaction
 
         private bool SelectProject()
         {
+            Utils.ClearConsole();
             List<string> avalaibleProjects = _projectService.GetProjectsName().ToList();
             avalaibleProjects.Add("Exit");
             string selectedProject = Utils.GetUserChoice(avalaibleProjects.ToArray(), "Select Project");
@@ -131,6 +137,7 @@ namespace Taskify_App.User_Interaction
 
         private bool? SelectTask()
         {
+            Utils.ClearConsole();
             List<string> availableTasks = _projectService.GetActivitiesName().ToList();
             availableTasks.Add("Exit");
             string selectedTask = Utils.GetUserChoice(availableTasks.ToArray(), "Select Task");
@@ -147,6 +154,7 @@ namespace Taskify_App.User_Interaction
 
         private void TaskManagement()
         {
+            Utils.ClearConsole();
             while (true)
             {
                 if (Enum.TryParse(Utils.GetUserChoice(new[] { "Add", "Edit", "Delete", "Exit" }, "Select option for Task Management."),
@@ -206,6 +214,7 @@ namespace Taskify_App.User_Interaction
 
         private bool AddTask()
         {
+            Utils.ClearConsole();
             string activityName = Utils.GetTaskName("Activity Name");
             if (_projectService.IsActivityFound(activityName))
             {
@@ -219,6 +228,7 @@ namespace Taskify_App.User_Interaction
 
         private bool DeleteTask()
         {
+            Utils.ClearConsole();
             List<string> activitiesName = _projectService.GetActivitiesName();
             activitiesName.Add("Exit");
             string activityToBeDeleted = Utils.GetUserChoice(activitiesName.ToArray(), "Choose the activity to be deleted");
@@ -236,6 +246,7 @@ namespace Taskify_App.User_Interaction
 
         private bool EditTask()
         {
+            Utils.ClearConsole();
             List<string> activitiesName = _projectService.GetActivitiesName();
             activitiesName.Add("Exit");
             string activityToBeEdited = Utils.GetUserChoice(activitiesName.ToArray(), "Choose the activity to be Edited");
@@ -252,6 +263,7 @@ namespace Taskify_App.User_Interaction
 
         private bool ConfirmDelete()
         {
+            Utils.ClearConsole();
             string[] confirmationChoice = new string[] { "Yes", "No" };
             if (Utils.GetUserChoice(confirmationChoice, "Are you sure to delete") == "Yes")
             {
@@ -262,7 +274,12 @@ namespace Taskify_App.User_Interaction
 
         private void TimeTracker()
         {
-            SelectProject();
+            Utils.ClearConsole();
+            if (!SelectProject())
+            {
+                return;
+            }
+
             bool? isTaskSelected = SelectTask();
             if (isTaskSelected == null)
             {
@@ -303,6 +320,71 @@ namespace Taskify_App.User_Interaction
             else
             {
                 Utils.DisplayInConsole("Exited", ConsoleColor.Magenta);
+            }
+        }
+
+        private void DisplayDashboard()
+        {
+            var recentActivities = _projectService.GetRecentActivities();
+            if (recentActivities == null || recentActivities.Count == 0)
+            {
+                Utils.DisplayInConsole("No Recent Activities Found", ConsoleColor.Green);
+                return;
+            }
+            foreach(var activity in recentActivities)
+            {
+                if (activity == null)
+                {
+                    continue;
+                }
+                Utils.DisplayInConsole($"Activity Name : {activity.TaskName} {Environment.NewLine}" +
+                                       $"Activity Description : {activity.TaskDescription}{Environment.NewLine}" +
+                                       $"Activity Total time : {activity.TotalTimeTaken} {Environment.NewLine}" +
+                                       $"{Environment.NewLine}Activity time stamps : ", ConsoleColor.Green);
+                DisplayTimeStamps(activity);
+            }
+        }
+
+        private void DisplayTimeStamps(Models.Activity activity)
+        {
+            foreach (var timeStamp in activity.TimeStamps)
+            {
+                Utils.DisplayInConsole($"Start : {timeStamp[0]} | Stop : {timeStamp[1]}", ConsoleColor.Green);
+            }
+            Utils.DisplayInConsole(Environment.NewLine, ConsoleColor.White);
+        }
+
+        private void ExportOptions()
+        {
+            if (Enum.TryParse(Utils.GetUserChoice(new[] { "Project", "All", "Exit" }, "Select what to export."),
+                    true, out ExportChoices exportChoices))
+            {
+                List<string> projects = _projectService.GetProjectsName();
+                projects.Add("Exit");
+
+                switch (exportChoices)
+                {
+                    case ExportChoices.Project:
+                        string selectedProject = Utils.GetUserChoice(projects.ToArray(), "Select a project.");
+                        if (selectedProject == "Exit")
+                        {
+                            break;
+                        }
+                        _projectService.ExportTasks(selectedProject);
+                        break;
+
+                    case ExportChoices.All:
+                        _projectService.ExportAll();
+                        break;
+
+                    case ExportChoices.Exit:
+                        Utils.DisplayInConsole("Exited successfully...", ConsoleColor.Red);
+                        return;
+                }
+            }
+            else
+            {
+                Utils.DisplayInConsole("Invalid Choice", ConsoleColor.Red);
             }
         }
     }

@@ -163,7 +163,7 @@ public static class Utils
 
     public static string GetDescription(string taskName)
     {
-        Console.Write($"Enter the {taskName} Description");
+        Console.Write($"Enter the {taskName} Description : ");
         string? description = Console.ReadLine();
         if (description == null || description.Trim() == "")
         {
@@ -216,5 +216,10 @@ public static class Utils
             }
             Console.WriteLine("Invalid Pls try again...");
         }
+    }
+
+    public static void ClearConsole()
+    {
+        Console.Clear();
     }
 }
