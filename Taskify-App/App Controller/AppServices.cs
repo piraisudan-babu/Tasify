@@ -1,9 +1,17 @@
-﻿using Taskify_App.Models;
+﻿using Taskify_App.Enums;
+using Taskify_App.Models;
 using Taskify_App.Repository;
 
 namespace Taskify_App.App_Controller
 {
-    public class ProjectService
+    public struct SummaryDetails
+    {
+        public string projectName { get; set; }
+        public string taskName { get; set; }
+        public DateTime[] timeStamp { get; set; }
+        public float totalTimeTaken { get; set; }
+    }
+    public class AppServices
     {
         private List<Project> Projects;
         private ProjectRepository _projectRepository;
@@ -15,7 +23,7 @@ namespace Taskify_App.App_Controller
         private DateTime TaskStartTime = DateTime.MinValue;
         private DateTime TaskEndTime = DateTime.MinValue;
 
-        public ProjectService(ProjectRepository projectRepository)
+        public AppServices(ProjectRepository projectRepository)
         {
             _projectRepository = projectRepository;
         }
@@ -67,7 +75,7 @@ namespace Taskify_App.App_Controller
             }
             TaskEndTime = DateTime.Now;
             Models.Activity activity = Activities.Where(activity => activity.TaskName == runningTaskName).FirstOrDefault()!;
-            activity.TotalTimeTaken = (TaskEndTime - TaskStartTime).Hours;
+            activity.TotalTimeTaken = (float)(TaskEndTime - TaskStartTime).Seconds/3600;
             activity.TimeStamps.Add(new[] {TaskStartTime, TaskEndTime});
             TaskStartTime = DateTime.MinValue;
             TaskEndTime = DateTime.MinValue;
@@ -79,6 +87,11 @@ namespace Taskify_App.App_Controller
         public string GetCurrentTask()
         {
             return selectedTaskName;
+        }
+
+        public string GetCurrentProject()
+        {
+            return ProjectName;
         }
 
         public List<string> GetProjectsName()
@@ -160,6 +173,10 @@ namespace Taskify_App.App_Controller
                     {
                         recentActivities[0] = activity;
                     }
+                    else if (activity.TimeStamps.Count == 0)
+                    {
+                        continue;
+                    }
                     else if (recentActivities[0].TimeStamps[recentActivities[0].TimeStamps.Count - 1][1] < activity.TimeStamps[activity.TimeStamps.Count - 1][1])
                     {
                         recentActivities[1] = recentActivities[0];
@@ -203,6 +220,86 @@ namespace Taskify_App.App_Controller
                     }
                 }
             }
+        }
+
+        public List<SummaryDetails> FilterWithDates(DateTime startDate, DateTime endDate)
+        {
+            List<SummaryDetails> filteredData = new List<SummaryDetails>();
+            startDate = DateTime.Parse(startDate.ToString("yyyy-MM-dd"));
+            endDate = DateTime.Parse(endDate.ToString("yyyy-MM-dd"));
+            foreach (Project project in Projects)
+            {
+                foreach (Activity activity in project.Activities)
+                {
+                    foreach (DateTime[] timeStamp in activity.TimeStamps)
+                    {
+                        DateTime[] dateTime = new DateTime[] { timeStamp[0].Date, timeStamp[1].Date };
+                        if (dateTime[0] >= startDate && dateTime[0] <= endDate || dateTime[1] >= startDate && dateTime[1] <= endDate)
+                        {
+                            filteredData.Add(new SummaryDetails {projectName = project.ProjectName, taskName = activity.TaskName, timeStamp = timeStamp, totalTimeTaken = activity.TotalTimeTaken});
+                        }
+                    }
+                }
+            }
+            return filteredData;
+        }
+
+        public List<SummaryDetails> SortTaskByProjectName()
+        {
+            List<SummaryDetails> summaryDetails = GetAllTaskSummary();
+            summaryDetails.Sort((element1, element2) => element1.projectName.CompareTo(element2.projectName));
+            return summaryDetails;
+        }
+
+        public List<SummaryDetails> SortTaskByTaskName()
+        {
+            List<SummaryDetails> summaryDetails = GetAllTaskSummary();
+            summaryDetails.Sort((element1, element2) => element1.taskName.CompareTo(element2.taskName));
+            return summaryDetails;
+        }
+
+        public List<SummaryDetails> SortTaskByTimeTaken()
+        {
+            List<SummaryDetails> summaryDetails = GetAllTaskSummary();
+            summaryDetails.Sort((element1, element2) => element1.totalTimeTaken.CompareTo(element2.totalTimeTaken));
+            return summaryDetails;
+        }
+
+        private List<SummaryDetails> GetAllTaskSummary()
+        {
+            List<SummaryDetails> summaryDetails = new List<SummaryDetails>();
+            foreach (Project project in Projects)
+            {
+                foreach (Activity activity in project.Activities)
+                {
+                    foreach (DateTime[] dateTime in activity.TimeStamps)
+                    {
+                        summaryDetails.Add(new SummaryDetails { projectName = project.ProjectName, taskName = activity.TaskName, timeStamp = dateTime, totalTimeTaken = activity.TotalTimeTaken });
+                    }
+                }
+            }
+            return summaryDetails;
+        }
+
+        public List<SummaryDetails> FilterByCategory(ProjectCategories projectCategory)
+        {
+            List<SummaryDetails> filteredSummaries = new List<SummaryDetails>();
+            foreach (Project project in Projects)
+            {
+                if (project.ProjectCategory != projectCategory)
+                {
+                    continue;
+                }
+
+                foreach (Activity activity in project.Activities)
+                {
+                    foreach (DateTime[] dateTime in activity.TimeStamps)
+                    {
+                        filteredSummaries.Add(new SummaryDetails { projectName = project.ProjectName, taskName = activity.TaskName, timeStamp = dateTime, totalTimeTaken = activity.TotalTimeTaken});
+                    }
+                }
+            }
+            return filteredSummaries;
         }
     }
 }

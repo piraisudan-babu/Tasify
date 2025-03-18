@@ -52,7 +52,7 @@ public static class Utils
         {
             Console.Write("Enter Email ID : ");
             string emailID = Console.ReadLine()!;
-            if (IsValidEmailID(emailID))
+            if (!string.IsNullOrEmpty(emailID) && IsValidEmailID(emailID))
             {
                 return emailID;
             }
@@ -221,5 +221,11 @@ public static class Utils
     public static void ClearConsole()
     {
         Console.Clear();
+    }
+
+    public static void WaitForUserInput()
+    {
+        Console.WriteLine("Press any key to continue");
+        Console.ReadKey();
     }
 }

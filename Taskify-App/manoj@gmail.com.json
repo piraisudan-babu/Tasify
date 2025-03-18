@@ -5,51 +5,22 @@
     "ProjectDescription": "",
     "Activities": [
       {
-        "TaskName": "Task1",
-        "TaskDescription": "",
-        "TimeStamps": [
-          [
-            "2025-03-15T18:56:41.352084+05:30",
-            "2025-03-15T18:56:46.1860529+05:30"
-          ],
-          [
-            "2025-03-15T19:09:28.1050383+05:30",
-            "2025-03-15T19:09:32.2186913+05:30"
-          ],
-          [
-            "2025-03-15T19:15:34.3293258+05:30",
-            "2025-03-15T19:16:10.0451002+05:30"
-          ]
-        ],
-        "TimeLimit": 10,
-        "TotalTimeTaken": 0
-      },
-      {
-        "TaskName": "Task2",
+        "TaskName": "Task4",
         "TaskDescription": "-",
         "TimeStamps": [
           [
-            "2025-03-15T19:16:20.5205371+05:30",
-            "2025-03-15T19:16:27.5380661+05:30"
-          ],
-          [
-            "2025-03-17T10:47:50.6098419+05:30",
-            "2025-03-17T10:48:03.1286762+05:30"
+            "2025-03-18T10:18:24.4809605+05:30",
+            "2025-03-18T10:18:31.8910476+05:30"
           ]
         ],
-        "TimeLimit": 12,
-        "TotalTimeTaken": 0
+        "TimeLimit": 1,
+        "TotalTimeTaken": 0.0019444445
       },
       {
-        "TaskName": "Task3",
-        "TaskDescription": "Designing",
-        "TimeStamps": [
-          [
-            "2025-03-17T10:41:50.6519066+05:30",
-            "2025-03-17T10:42:01.2218333+05:30"
-          ]
-        ],
-        "TimeLimit": 10,
+        "TaskName": "Task1",
+        "TaskDescription": "Design",
+        "TimeStamps": [],
+        "TimeLimit": 1,
         "TotalTimeTaken": 0
       }
     ]

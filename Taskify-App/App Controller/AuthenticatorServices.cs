@@ -8,9 +8,9 @@ namespace Taskify_App
     {
         private UserRepository _userRepository;
         private List<User> Users;
-        private ProjectService _projectService;
+        private AppServices _projectService;
 
-        public AuthenticatorServices(UserRepository userRepository, ProjectService projectService)
+        public AuthenticatorServices(UserRepository userRepository, AppServices projectService)
         {
             _userRepository = userRepository;
             List<User>? users = _userRepository.GetUsers();
