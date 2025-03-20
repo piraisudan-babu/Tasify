@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Taskify_App.Utilities
+﻿namespace Taskify_App.Utilities
 {
+    /// <summary>
+    /// Class <c>Constants</c> to hold the constants used throughout the program.
+    /// </summary>
     public static class Constants
     {
         public const string Login = "Login";
@@ -25,5 +22,17 @@ namespace Taskify_App.Utilities
         public const string InvalidStopMessage = "The Task is not started First start the task";
         public const string TimerStartMessage = "Timer started...";
         public const string TimerStopMessage = "Timer stopped...";
+        public const string LoginMessage = "Login Successfully!!!";
+        public const string TryAgainMessage = "Try again!!";
+        public const string RegisterMessage = "User registration successfully!!!";
+        public const string EmailNotFound = "Email ID not found!!";
+        public const string EmailFound = "Email ID already found!!";
+        public const string IncorrectPassword = "Incorrect password!!";
+        public const string InvalidUserName = "Invalid User Name!! User name can't be empty.";
+        public const string InvalidEmailID = "Invalid Email ID!!";
+        public const string InvalidPassword = "Invalid Password";
+        public const string InvalidName = "Invalid Name!! Name should have atleast 1 character and all should be AlphaNumeric.";
+        public const string InvalidTimeLimit = "Invalid Time limit!! Time limit decimal place should not exceed 5 figures. Time limit can be [0,100] range!! Try Again";
+        public const string ContinueMessage = "Press any key to continue.";
     }
 }

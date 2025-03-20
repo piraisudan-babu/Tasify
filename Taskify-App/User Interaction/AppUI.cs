@@ -5,14 +5,25 @@ using Taskify_App.Utilities;
 
 namespace Taskify_App.User_Interaction
 {
+    /// <summary>
+    /// Class <c>AppUI</c> to hold the app user interactions functionalities.
+    /// </summary>
     public class AppUI
     {
-        private AppServices _projectService;
-        public AppUI(AppServices projectService)
+        private AppServices _appService;
+
+        /// <summary>
+        /// Constructor to initialize the AppService class object.
+        /// </summary>
+        /// <param name="appService">AppService class object.</param>
+        public AppUI(AppServices appService)
         {
-            _projectService = projectService;
+            _appService = appService;
         }
 
+        /// <summary>
+        /// Function to get the user choice for main menu.
+        /// </summary>
         public void DisplayOperations()
         {
             while (true)
@@ -43,7 +54,8 @@ namespace Taskify_App.User_Interaction
 
                         case TaskOperations.Logout:
                             Utils.DisplayInConsole(Constants.LogoutMessage, ConsoleColor.Magenta);
-                            _projectService.UpdateProjects();
+                            _appService.SetStopTime();
+                            _appService.UpdateProjects();
                             return;
 
                         default:
@@ -58,6 +70,9 @@ namespace Taskify_App.User_Interaction
             }
         }
 
+        /// <summary>
+        /// Function to get the user choice on task manager.
+        /// </summary>
         private void TaskManager()
         {
             while (true)
@@ -72,21 +87,30 @@ namespace Taskify_App.User_Interaction
                             if (newProject == null)
                             {
                                 Utils.DisplayInConsole(Constants.ProjectExistMessage, ConsoleColor.Red);
+                                Utils.WaitForUserInput();
                                 return;
                             }
                             Utils.DisplayInConsole(Constants.ProjectCreatedMessage, ConsoleColor.Cyan);
-                            TaskManagement();
+                            Utils.WaitForUserInput();
+                            TaskManagement(newProject.ProjectName);
                             break;
 
                         case ProjectChoices.SelectProject:
-                            if (!SelectProject())
+                            string? selectedProject = SelectProject();
+                            if (selectedProject == null)
+                            {
+                                Utils.DisplayInConsole("No Project found!!", ConsoleColor.Red);
+                                Utils.WaitForUserInput();
+                                return;
+                            }
+                            if (selectedProject == string.Empty)
                             {
                                 Utils.DisplayInConsole(Constants.ExitMessage, ConsoleColor.Magenta);
                             }
                             else
                             {
                                 Utils.DisplayInConsole(Constants.SwitchProjectMessage, ConsoleColor.Cyan);
-                                TaskManagement();
+                                TaskManagement(selectedProject);
                             }
                             break;
 
@@ -105,58 +129,78 @@ namespace Taskify_App.User_Interaction
             }
         }
 
+        /// <summary>
+        /// Function to create a project by user input.
+        /// </summary>
+        /// <returns>Project created.</returns>
         private Project? GetProjectDetails()
         {
             string projectName = Utils.GetTaskName("Project");
-            if (_projectService.IsProjectExist(projectName))
+            if (_appService.IsProjectExist(projectName))
             {
                 return null;
             }
             ProjectCategories projectCategory = Utils.GetProjectCategory(projectName);
-            Utils.DisplayInConsole("Project Category : " + projectCategory, ConsoleColor.White);
+            Utils.DisplayInConsole("Project Category : " + projectCategory + Environment.NewLine, ConsoleColor.White);
             string projectDescription = Utils.GetDescription(projectName);
             Project newProject = new Project(projectName, projectCategory, projectDescription, new List<Activity>());
-            _projectService.CreateProject(newProject);
-            _projectService.SetTasks(projectName);
+            _appService.CreateProject(newProject);
+            _appService.SetTasks(projectName);
             return newProject;
         }
 
-        private bool SelectProject()
+        /// <summary>
+        /// Function to display projects to user and make them to select one.
+        /// </summary>
+        /// <returns>True if project selected else False.</returns>
+        private string? SelectProject()
         {
             Utils.ClearConsole();
-            List<string> avalaibleProjects = _projectService.GetProjectsName().ToList();
-            avalaibleProjects.Add(Constants.Exit);
-            string selectedProject = Utils.GetUserChoice(avalaibleProjects.ToArray(), "Select Project");
+            List<string> availableProjects = _appService.GetProjectsName().ToList();
+            if (availableProjects.Count == 0)
+            {
+                return null; 
+            }
+            availableProjects.Add(Constants.Exit);
+            string selectedProject = Utils.GetUserChoice(availableProjects.ToArray(), "Select Project");
             if (selectedProject == Constants.Exit)
             {
-                return false;
+                return string.Empty;
             }
-            _projectService.SetTasks(selectedProject);
-            return true;
+            _appService.SetTasks(selectedProject);
+            return selectedProject;
         }
 
+        /// <summary>
+        /// Function to list out the tasks and get the user choice for it.
+        /// </summary>
+        /// <returns>True if any task is selected else false.</returns>
         private bool? SelectTask()
         {
             Utils.ClearConsole();
-            List<string> availableTasks = _projectService.GetActivitiesName().ToList();
+            List<string> availableTasks = _appService.GetActivitiesName().ToList();
             availableTasks.Add(Constants.Exit);
             string selectedTask = Utils.GetUserChoice(availableTasks.ToArray(), "Select Task");
             if (selectedTask == Constants.Exit)
             {
                 return false;
             }
-            if (!_projectService.SetCurrentTask(selectedTask))
+            if (!_appService.SetCurrentTask(selectedTask))
             {
                 return null;
             }
             return true;
         }
 
-        private void TaskManagement()
+        /// <summary>
+        /// Function to display the task choices to user and make them to perform operations.
+        /// </summary>
+        private void TaskManagement(string projectName)
         {
-            Utils.ClearConsole();
             while (true)
             {
+                Utils.ClearConsole();
+                Utils.DisplayInConsole($"You are in project {projectName}" + Environment.NewLine, ConsoleColor.Green);
                 if (Enum.TryParse(Utils.GetUserChoice(new[] { "Add", "Edit", "Delete", "Exit" }, "Select option for Task Management."),
                     true, out TaskManagementChoice taskManagementChoice))
                 {
@@ -165,38 +209,41 @@ namespace Taskify_App.User_Interaction
                         case TaskManagementChoice.Add:
                             if (AddTask())
                             {
-                                Utils.DisplayInConsole(Constants.TaskAddedMessage, ConsoleColor.Green);
+                                Utils.DisplayInConsole(Constants.TaskAddedMessage + Environment.NewLine, ConsoleColor.Green);
                             }
                             else
                             {
-                                Utils.DisplayInConsole(Constants.TaskExistMessage, ConsoleColor.Red);
+                                Utils.DisplayInConsole(Constants.TaskExistMessage + Environment.NewLine, ConsoleColor.Red);
                             }
+                            Utils.WaitForUserInput();
                             break;
 
                         case TaskManagementChoice.Edit:
                             if (EditTask())
                             {
-                                Utils.DisplayInConsole(Constants.TaskEditMessage, ConsoleColor.Green);
+                                Utils.DisplayInConsole(Constants.TaskEditMessage + Environment.NewLine, ConsoleColor.Green);
                             }
                             else
                             {
-                                Utils.DisplayInConsole(Constants.ExitMessage, ConsoleColor.Magenta);
+                                Utils.DisplayInConsole(Constants.ExitMessage + Environment.NewLine, ConsoleColor.Magenta);
                             }
+                            Utils.WaitForUserInput();
                             break;
 
                         case TaskManagementChoice.Delete:
                             if (DeleteTask())
                             {
-                                Utils.DisplayInConsole(Constants.TaskDeleteMessage, ConsoleColor.Cyan);
+                                Utils.DisplayInConsole(Constants.TaskDeleteMessage + Environment.NewLine, ConsoleColor.Cyan);
                             }
                             else
                             {
-                                Utils.DisplayInConsole(Constants.ExitMessage, ConsoleColor.Red);
+                                Utils.DisplayInConsole(Constants.ExitMessage + Environment.NewLine, ConsoleColor.Red);
                             }
+                            Utils.WaitForUserInput();
                             break;
 
                         case TaskManagementChoice.Exit:
-                            _projectService.MergeTaskWithProject();
+                            _appService.MergeTaskWithProject();
                             return;
 
                         default:
@@ -211,24 +258,28 @@ namespace Taskify_App.User_Interaction
             }
         }
 
+        /// <summary>
+        /// Function to add the task.
+        /// </summary>
+        /// <returns>True if added else false.</returns>
         private bool AddTask()
         {
             Utils.ClearConsole();
-            string activityName = Utils.GetTaskName("Activity Name");
-            if (_projectService.IsActivityFound(activityName))
+            string activityName = Utils.GetTaskName("Activity");
+            if (_appService.IsActivityFound(activityName))
             {
                 return false;
             }
-            string activityDescription = Utils.GetDescription("Activity Name");
-            int activityTimeLimit = Utils.GetTimeLimit();
-            _projectService.AddActivity(new Activity(activityName, activityDescription, new List<DateTime[]>(), activityTimeLimit));
+            string activityDescription = Utils.GetDescription("Activity");
+            float activityTimeLimit = Utils.GetTimeLimit();
+            _appService.AddActivity(new Activity(activityName, activityDescription, new List<DateTime[]>(), activityTimeLimit));
             return true;
         }
 
         private bool DeleteTask()
         {
             Utils.ClearConsole();
-            List<string> activitiesName = _projectService.GetActivitiesName();
+            List<string> activitiesName = _appService.GetActivitiesName();
             activitiesName.Add(Constants.Exit);
             string activityToBeDeleted = Utils.GetUserChoice(activitiesName.ToArray(), "Choose the activity to be deleted");
             if (activityToBeDeleted == Constants.Exit)
@@ -237,16 +288,20 @@ namespace Taskify_App.User_Interaction
             }
             if (ConfirmDelete())
             {
-                _projectService.RemoveActivity(activityToBeDeleted);
+                _appService.RemoveActivity(activityToBeDeleted);
                 return true;
             }
             return false;
         }
 
+        /// <summary>
+        /// Function to edit task.
+        /// </summary>
+        /// <returns>True if edited successfully else false.</returns>
         private bool EditTask()
         {
             Utils.ClearConsole();
-            List<string> activitiesName = _projectService.GetActivitiesName();
+            List<string> activitiesName = _appService.GetActivitiesName();
             activitiesName.Add(Constants.Exit);
             string activityToBeEdited = Utils.GetUserChoice(activitiesName.ToArray(), "Choose the activity to be Edited");
             if (activityToBeEdited == Constants.Exit)
@@ -255,11 +310,15 @@ namespace Taskify_App.User_Interaction
             }
             string activityNameToBeUpdated = Utils.GetActivityNameToUpdate();
             string activityDescriptionToUpdated = Utils.GetActivityDescriptionToUpdate();
-            int activityTimeLimitToBeUpdated = Utils.GetActivityTimeLimitToUpdate();
-            _projectService.UpdateActivity(activityToBeEdited, activityToBeEdited, activityDescriptionToUpdated, activityTimeLimitToBeUpdated);
+            float activityTimeLimitToBeUpdated = Utils.GetActivityTimeLimitToUpdate();
+            _appService.UpdateActivity(activityToBeEdited, activityToBeEdited, activityDescriptionToUpdated, activityTimeLimitToBeUpdated);
             return true;
         }
 
+        /// <summary>
+        /// Function to confirm the delete operation.
+        /// </summary>
+        /// <returns>True if yes else false</returns>
         private bool ConfirmDelete()
         {
             Utils.ClearConsole();
@@ -271,10 +330,19 @@ namespace Taskify_App.User_Interaction
             return false;
         }
 
+        /// <summary>
+        /// Function to get user choice on timer.
+        /// </summary>
         private void TimeTracker()
         {
             Utils.ClearConsole();
-            if (!SelectProject())
+            string? isSelected = SelectProject();
+            if (isSelected == null)
+            {
+                Utils.DisplayInConsole("No Project Found", ConsoleColor.Red);
+                return;
+            }
+            if (isSelected == string.Empty)
             {
                 return;
             }
@@ -282,7 +350,7 @@ namespace Taskify_App.User_Interaction
             bool? isTaskSelected = SelectTask();
             if (isTaskSelected == null)
             {
-                Utils.DisplayInConsole($"Already - {_projectService.GetCurrentProject()} is running in background Pls stop it to continue.", ConsoleColor.Green );
+                Utils.DisplayInConsole($"Already - {_appService.runningProject} project - {_appService.GetCurrentTask()} task is running in background Pls stop it to continue." + Environment.NewLine, ConsoleColor.Green );
             }
             else if (isTaskSelected == true)
             {
@@ -292,17 +360,18 @@ namespace Taskify_App.User_Interaction
                     switch (activityStatus)
                     {
                         case ActivityStatus.Start:
-                            _projectService.SetStartTime();
+                            _appService.SetStartTime();
+                            Utils.DisplayInConsole("Task started", ConsoleColor.Cyan);
                             break;
 
                         case ActivityStatus.Stop:
-                            if (!_projectService.SetStopTime())
+                            if (!_appService.SetStopTime())
                             {
-                                Utils.DisplayInConsole(Constants.InvalidStopMessage, ConsoleColor.Green );
+                                Utils.DisplayInConsole(Constants.InvalidStopMessage + Environment.NewLine, ConsoleColor.Green );
                             }
                             else
                             {
-                                Utils.DisplayInConsole(Constants.TimerStopMessage, ConsoleColor.Green);
+                                Utils.DisplayInConsole(Constants.TimerStopMessage + Environment.NewLine, ConsoleColor.Green);
                             }
                             break;
 
@@ -312,22 +381,25 @@ namespace Taskify_App.User_Interaction
                 }
                 else
                 {
-                    Utils.DisplayInConsole(Constants.InvalidChoice, ConsoleColor.Red);
+                    Utils.DisplayInConsole(Constants.InvalidChoice + Environment.NewLine, ConsoleColor.Red);
                 }
             }
             else
             {
-                Utils.DisplayInConsole(Constants.ExitMessage, ConsoleColor.Magenta);
+                Utils.DisplayInConsole(Constants.ExitMessage + Environment.NewLine, ConsoleColor.Magenta);
             }
             Utils.WaitForUserInput();
         }
 
+        /// <summary>
+        /// Function to display the dashboard of the current user.
+        /// </summary>
         private void DisplayDashboard()
         {
-            var recentActivities = _projectService.GetRecentActivities();
+            var recentActivities = _appService.GetRecentActivities();
             if (recentActivities == null || recentActivities.Count == 0)
             {
-                Utils.DisplayInConsole("No Recent Activities Found", ConsoleColor.Green);
+                Utils.DisplayInConsole("No Recent Activities Found" + Environment.NewLine, ConsoleColor.Green);
                 return;
             }
             foreach(var activity in recentActivities)
@@ -344,21 +416,28 @@ namespace Taskify_App.User_Interaction
             }
         }
 
+        /// <summary>
+        /// Function to display the time stamps of the given activity.
+        /// </summary>
+        /// <param name="activity">Activity to be displayed.</param>
         private void DisplayTimeStamps(Models.Activity activity)
         {
             foreach (var timeStamp in activity.TimeStamps)
             {
-                Utils.DisplayInConsole($"Start : {timeStamp[0]} | Stop : {timeStamp[1]}", ConsoleColor.Green);
+                Utils.DisplayInConsole($"Start : {timeStamp[0]} | Stop : {timeStamp[1]}" + Environment.NewLine, ConsoleColor.Green);
             }
             Utils.DisplayInConsole(Environment.NewLine, ConsoleColor.White);
         }
 
+        /// <summary>
+        /// Function to get the user choice on exporting csv file.
+        /// </summary>
         private void ExportOptions()
         {
             if (Enum.TryParse(Utils.GetUserChoice(new[] { "Project", "All", "Exit" }, "Select what to export."),
                     true, out ExportChoices exportChoices))
             {
-                List<string> projects = _projectService.GetProjectsName();
+                List<string> projects = _appService.GetProjectsName();
                 projects.Add(Constants.Exit);
 
                 switch (exportChoices)
@@ -369,11 +448,11 @@ namespace Taskify_App.User_Interaction
                         {
                             break;
                         }
-                        _projectService.ExportTasks(selectedProject);
+                        _appService.ExportTasks(selectedProject);
                         break;
 
                     case ExportChoices.All:
-                        _projectService.ExportAll();
+                        _appService.ExportAll();
                         break;
 
                     case ExportChoices.Exit:
@@ -386,6 +465,9 @@ namespace Taskify_App.User_Interaction
             }
         }
 
+        /// <summary>
+        /// Function to get summary view choices.
+        /// </summary>
         private void SummaryView()
         {
             if (Enum.TryParse(Utils.GetUserChoice(new[] { "Today", "Weekly", "Monthly", "Sorted View", "Filter", "Exit" }, "Select how You want to view"), true, out SummaryViewChoice summaryViewChoice))
@@ -394,19 +476,19 @@ namespace Taskify_App.User_Interaction
                 switch (summaryViewChoice)
                 {
                     case SummaryViewChoice.Today:
-                        summaries = _projectService.FilterWithDates(DateTime.Today, DateTime.Today);
+                        summaries = _appService.FilterWithDates(DateTime.Today, DateTime.Today);
                         DisplaySummary(summaries, "today");
                         Utils.WaitForUserInput();
                         break;
 
                     case SummaryViewChoice.Weekly:
-                        summaries = _projectService.FilterWithDates(DateTime.Now.AddDays(-7), DateTime.Now);
+                        summaries = _appService.FilterWithDates(DateTime.Now.AddDays(-7), DateTime.Now);
                         DisplaySummary(summaries, "Weekly");
                         Utils.WaitForUserInput();
                         break;
 
                     case SummaryViewChoice .Monthly:
-                        summaries = _projectService.FilterWithDates(new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1), DateTime.Now);
+                        summaries = _appService.FilterWithDates(new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1), DateTime.Now);
                         DisplaySummary(summaries, "Monthly");
                         Utils.WaitForUserInput();
                         break;
@@ -424,34 +506,49 @@ namespace Taskify_App.User_Interaction
                         return;
 
                     default:
-                        Utils.DisplayInConsole("Invalid Choice", ConsoleColor.Red);
+                        Utils.DisplayInConsole(Constants.InvalidChoice, ConsoleColor.Red);
                         break;
                 }
             }
             else
             {
-                Utils.DisplayInConsole("Invalid Choice", ConsoleColor.Red);
+                Utils.DisplayInConsole(Constants.InvalidChoice, ConsoleColor.Red);
             }
         }
 
+        /// <summary>
+        /// Function to display the summary.
+        /// </summary>
+        /// <param name="summaryDetails">List of summary list.</param>
+        /// <param name="type">Type of the summary.</param>
         private void DisplaySummary(List<SummaryDetails> summaryDetails, string type)
         {
             if (summaryDetails.Count == 0)
             {
-                Utils.DisplayInConsole($"No Task found {type}", ConsoleColor.Red);
+                Utils.DisplayInConsole($"No Task found {type}" + Environment.NewLine, ConsoleColor.Red);
                 return;
             }
 
-            Utils.DisplayInConsole($"Summary of {type} activity", ConsoleColor.Magenta);
+            Utils.DisplayInConsole($"Summary of {type} activity" + Environment.NewLine, ConsoleColor.Magenta);
             for (int i = 0; i < summaryDetails.Count; i++)
             {
-                Utils.DisplayInConsole("Project Name : " + summaryDetails[i].projectName, ConsoleColor.White);
-                Utils.DisplayInConsole("Task Name : " + summaryDetails[i].taskName, ConsoleColor.White);
-                Utils.DisplayInConsole($"Task Start DateTime : {summaryDetails[i].timeStamp[0]}, Task End DateTime : {summaryDetails[i].timeStamp[1]}", ConsoleColor.Blue);
-                Utils.DisplayInConsole("Task Total time taken : " + summaryDetails[i].totalTimeTaken, ConsoleColor.White);
+                Utils.DisplayInConsole("Project Name : " + summaryDetails[i].projectName + Environment.NewLine, ConsoleColor.White);
+                Utils.DisplayInConsole("Task Name : " + summaryDetails[i].taskName + Environment.NewLine, ConsoleColor.White);
+                if (summaryDetails[i].timeStamp.Length == 0)
+                {
+                    Utils.DisplayInConsole("Task : []" + Environment.NewLine, ConsoleColor.Blue);
+                }
+                else
+                {
+                    Utils.DisplayInConsole($"Task Start DateTime : {summaryDetails[i].timeStamp[0]}, Task End DateTime : {summaryDetails[i].timeStamp[1]}" + Environment.NewLine, ConsoleColor.Blue);
+                }
+                Utils.DisplayInConsole("Task Total time taken : " + summaryDetails[i].totalTimeTaken + Environment.NewLine, ConsoleColor.White);
             }
         }
 
+        /// <summary>
+        /// Function to display the sorting choice to the users.
+        /// </summary>
         private void SortedView()
         {
             if (Enum.TryParse(Utils.GetUserChoice(new[] {"Project Name", "Task Name", "Task Duration", "Exit"}, "Select the sorted order to display"), true, out SortedViewChoices sortedViewChoices))
@@ -460,17 +557,17 @@ namespace Taskify_App.User_Interaction
                 switch (sortedViewChoices)
                 {
                     case SortedViewChoices.ProjectName:
-                        summaries = _projectService.SortTaskByProjectName();
+                        summaries = _appService.SortTaskByProjectName();
                         DisplaySummary(summaries, "Sorted By Project Name");
                         break;
 
                     case SortedViewChoices.TaskName:
-                        summaries = _projectService.SortTaskByTaskName();
+                        summaries = _appService.SortTaskByTaskName();
                         DisplaySummary(summaries, "Sorted By Task Name");
                         break;
 
                     case SortedViewChoices.TaskDuration:
-                        summaries = _projectService.SortTaskByTimeTaken();
+                        summaries = _appService.SortTaskByTimeTaken();
                         DisplaySummary(summaries, "Sorted By Time Taken");
                         break;
 
@@ -478,16 +575,19 @@ namespace Taskify_App.User_Interaction
                         return;
 
                     default:
-                        Utils.DisplayInConsole("Invalid Choice", ConsoleColor.Red);
+                        Utils.DisplayInConsole(Constants.InvalidChoice + Environment.NewLine, ConsoleColor.Red);
                         break;
                 }
             }
             else
             {
-                Utils.DisplayInConsole("Invalid Choice", ConsoleColor.Red);
+                Utils.DisplayInConsole(Constants.InvalidChoice + Environment.NewLine, ConsoleColor.Red);
             }
         }
 
+        /// <summary>
+        /// Function to display the filtering choice to user.
+        /// </summary>
         private void DisplayFilterChoice()
         {
             if (Enum.TryParse(Utils.GetUserChoice(new[] {"Project Category", "Running Task", "Exit"}, "Select a Filter Option"), true, out FilterChoices filterChoices))
@@ -501,42 +601,49 @@ namespace Taskify_App.User_Interaction
                             switch (projectCategories)
                             {
                                 case ProjectCategories.Personal:
-                                    summaries = _projectService.FilterByCategory(ProjectCategories.Personal);
+                                    summaries = _appService.FilterByCategory(ProjectCategories.Personal);
                                     DisplaySummary(summaries, "Filter by project Category.");
                                     break;
 
                                 case ProjectCategories.Company:
-                                    summaries = _projectService.FilterByCategory(ProjectCategories.Company);
+                                    summaries = _appService.FilterByCategory(ProjectCategories.Company);
                                     DisplaySummary(summaries, "Filter by project Category.");
                                     break;
 
                                 default:
-                                    Utils.DisplayInConsole("Invalid Choice", ConsoleColor.Red);
+                                    Utils.DisplayInConsole(Constants.InvalidChoice + Environment.NewLine, ConsoleColor.Red);
                                     break;
                             }
                         }
                         else
                         {
-                            Utils.DisplayInConsole("Invalid Choice", ConsoleColor.Red);
+                            Utils.DisplayInConsole(Constants.InvalidChoice + Environment.NewLine, ConsoleColor.Red);
                         }
                         break;
 
                     case FilterChoices.RunningTask:
-                        Utils.DisplayInConsole($"Current running project - {_projectService.GetCurrentTask}, Current running task - {_projectService.GetCurrentTask}", ConsoleColor.White);
+                        string runningTask = _appService.GetCurrentTask();
+                        if (runningTask == "")
+                        {
+                            Utils.DisplayInConsole("No task running" + Environment.NewLine, ConsoleColor.Red);
+                            break;
+                        }
+                        Utils.DisplayInConsole($"Current running project - {_appService.runningProject}, Current running task - {runningTask}" + Environment.NewLine, ConsoleColor.White);
                         break;
 
                     case FilterChoices.Exit:
                         return;
 
                     default:
-                        Utils.DisplayInConsole("Invalid Choice", ConsoleColor.Red);
+                        Utils.DisplayInConsole(Constants.InvalidChoice + Environment.NewLine, ConsoleColor.Red);
                         break;
                 }
             }
             else
             {
-                Utils.DisplayInConsole("Invalid Choice", ConsoleColor.Red);
+                Utils.DisplayInConsole(Constants.InvalidChoice + Environment.NewLine, ConsoleColor.Red);
             }
+            Utils.WaitForUserInput();
         }
     }
 }

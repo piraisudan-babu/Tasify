@@ -1,5 +1,8 @@
 ﻿namespace Taskify_App.Enums
 {
+    /// <summary>
+    /// Enum to store the export choices.
+    /// </summary>
     public enum ExportChoices
     {
         Project = 1,

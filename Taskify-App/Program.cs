@@ -3,8 +3,14 @@ using Taskify_App.App_Controller;
 using Taskify_App.Repository;
 using Taskify_App.User_Interaction;
 
+/// <summary>
+/// Class <c>Program</c> to hold Main function.
+/// </summary>
 public class Program
 {
+    /// <summary>
+    /// Function to inject the dependency and create the objects for all classes.
+    /// </summary>
     public static void Main()
     {
         UserRepository userRepository = new UserRepository();

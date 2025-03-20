@@ -1,5 +1,8 @@
 ﻿namespace Taskify_App.Enums
 {
+    /// <summary>
+    /// Enum to store the summary view choices.
+    /// </summary>
     public enum SummaryViewChoice
     {
         Today = 1,
