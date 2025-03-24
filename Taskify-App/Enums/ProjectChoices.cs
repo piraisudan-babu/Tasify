@@ -7,6 +7,7 @@
     {
         SelectProject = 1,
         CreateProject = 2,
-        Exit = 3,
+        DeleteProject = 3,
+        Exit = 4,
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using Taskify_App.Enums;
 using Taskify_App.Models;
 using Taskify_App.Repository;
@@ -15,8 +16,8 @@ namespace Taskify_App.App_Controller
         private List<Models.Activity> Activities;
         private string EmailID;
         private string ProjectName;
-        private string selectedTaskName = string.Empty;
-        private string runningTaskName = string.Empty;
+        private long selectedTaskID = -1;
+        private long runningTaskID = -1;
         public string runningProject { get; set; } = string.Empty;
         private DateTime TaskStartTime = DateTime.MinValue;
         private DateTime TaskEndTime = DateTime.MinValue;
@@ -65,11 +66,11 @@ namespace Taskify_App.App_Controller
         /// </summary>
         /// <param name="taskName">Current working task name.</param>
         /// <returns>True if task is set else false.</returns>
-        public bool SetCurrentTask(string taskName)
+        public bool SetCurrentTask(long taskID)
         {
-            if (selectedTaskName == string.Empty && runningTaskName == string.Empty || taskName == runningTaskName)
+            if (selectedTaskID == -1 && runningTaskID == -1 || taskID == runningTaskID)
             {
-                selectedTaskName = taskName;
+                selectedTaskID = taskID;
                 return true;
             }
             return false;
@@ -79,11 +80,16 @@ namespace Taskify_App.App_Controller
         /// Function to set the start time of task.
         /// </summary>
         /// <returns>True if the task is started else false.</returns>
-        public void SetStartTime()
+        public bool SetStartTime()
         {
+            if (runningTaskID !=  -1)
+            {
+                return false;
+            }
             TaskStartTime = DateTime.Now;
-            runningTaskName = selectedTaskName;
+            runningTaskID = selectedTaskID;
             runningProject = ProjectName;
+            return true;
         }
 
         /// <summary>
@@ -92,19 +98,19 @@ namespace Taskify_App.App_Controller
         /// <returns>True if the task is stopped else false.</returns>
         public bool SetStopTime()
         {
-            if (runningTaskName == string.Empty)
+            if (runningTaskID == -1)
             {
-                selectedTaskName = string.Empty;
+                selectedTaskID = -1;
                 return false;
             }
             TaskEndTime = DateTime.Now;
-            Models.Activity activity = Activities.Where(activity => activity.TaskName == runningTaskName).FirstOrDefault()!;
+            Models.Activity activity = Activities.Where(activity => activity.TaskID == runningTaskID).FirstOrDefault()!;
             activity.TotalTimeTaken += (float)(TaskEndTime - TaskStartTime).Seconds/3600;
             activity.TimeStamps.Add(new[] {TaskStartTime, TaskEndTime});
             TaskStartTime = DateTime.MinValue;
             TaskEndTime = DateTime.MinValue;
-            runningTaskName = string.Empty;
-            selectedTaskName = string.Empty;
+            runningTaskID = -1;
+            selectedTaskID = -1;
             runningProject = string.Empty;
             return true;
         }
@@ -113,9 +119,9 @@ namespace Taskify_App.App_Controller
         /// Function to get the current task.
         /// </summary>
         /// <returns>Current task name</returns>
-        public string GetCurrentTask()
+        public long GetCurrentTask()
         {
-            return selectedTaskName;
+            return selectedTaskID;
         }
 
         /// <summary>
@@ -168,10 +174,16 @@ namespace Taskify_App.App_Controller
         /// Function to remove an activity from the activity list.
         /// </summary>
         /// <param name="activityName">Activity Name.</param>
-        public void RemoveActivity(string activityName)
+        public void RemoveActivity(long activityID)
         {
-            Models.Activity activity = Activities.FirstOrDefault(activity => activity.TaskName == activityName)!;
+            Models.Activity activity = Activities.FirstOrDefault(activity => activity.TaskID == activityID)!;
             Activities.Remove(activity);
+        }
+
+        public void RemoveProject(string projectName)
+        {
+            Project projectToBeDeleted = Projects.FirstOrDefault(project => project.ProjectName == projectName)!;
+            Projects.Remove(projectToBeDeleted);
         }
 
         /// <summary>
@@ -188,9 +200,21 @@ namespace Taskify_App.App_Controller
         /// Function to get all activities names.
         /// </summary>
         /// <returns>List of activity names.</returns>
-        public List<string> GetActivitiesName()
+        public string[] GetActivitiesDetails()
         {
-            return Activities.Select(activity => activity.TaskName).ToList();
+            string[] activityDetails = new string[Activities.Count + 1];
+            int count = 0;
+            foreach(var activity in Activities)
+            {
+                string detail = activity.TaskID + " , " + activity.TaskName + " , ";
+                if (activity.TaskDescription.Length <= 20)
+                    detail += activity.TaskDescription;
+                else 
+                    detail += activity.TaskDescription.Substring(0,20) + "...";
+                activityDetails[count++] = detail;
+            }
+            activityDetails[count] = "Exit";
+            return activityDetails;
         }
 
         /// <summary>
@@ -200,9 +224,9 @@ namespace Taskify_App.App_Controller
         /// <param name="activityNameToBeUpdated">Name to be updated.</param>
         /// <param name="activityDescriptionToUpdated">Description to be updated.</param>
         /// <param name="activityTimeLimitToBeUpdated">Time limit to be updated.</param>
-        public void UpdateActivity(string activityName, string activityNameToBeUpdated, string activityDescriptionToUpdated, float activityTimeLimitToBeUpdated)
+        public void UpdateActivity(long activityID, string activityNameToBeUpdated, string activityDescriptionToUpdated, float activityTimeLimitToBeUpdated)
         {
-            Models.Activity activity = Activities.FirstOrDefault(activity => activity.TaskName == activityName)!;
+            Models.Activity activity = Activities.FirstOrDefault(activity => activity.TaskID == activityID)!;
             if (activityNameToBeUpdated != string.Empty)
             {
                 activity.TaskName = activityNameToBeUpdated;
@@ -252,6 +276,7 @@ namespace Taskify_App.App_Controller
                     if (recentActivities[0] == null)
                     {
                         recentActivities[0] = activity;
+                        continue;
                     }
                     else if (activity.TimeStamps.Count == 0)
                     {
@@ -261,8 +286,10 @@ namespace Taskify_App.App_Controller
                     {
                         recentActivities[1] = recentActivities[0];
                         recentActivities[0] = activity;
+                        continue;
                     }
-                    else if (recentActivities[0].TimeStamps[recentActivities[0].TimeStamps.Count - 1][1] >= activity.TimeStamps[activity.TimeStamps.Count - 1][1] && recentActivities[1].TimeStamps[recentActivities[0].TimeStamps.Count - 1][1] < activity.TimeStamps[activity.TimeStamps.Count - 1][1])
+                    Console.WriteLine(activity.TimeStamps[activity.TimeStamps.Count - 1][1]);
+                    if (recentActivities[1] == null || recentActivities[0].TimeStamps[recentActivities[0].TimeStamps.Count - 1][1] >= activity.TimeStamps[activity.TimeStamps.Count - 1][1] && recentActivities[1].TimeStamps[recentActivities[0].TimeStamps.Count - 1][1] < activity.TimeStamps[activity.TimeStamps.Count - 1][1])
                     {
                         recentActivities[1] = activity;
                     }
@@ -281,11 +308,11 @@ namespace Taskify_App.App_Controller
             Project project = Projects.Where(project => project.ProjectName ==  projectName).FirstOrDefault()!;
             using (StreamWriter writer = new StreamWriter(filePath))
             {
-                writer.WriteLine("Activity Name, Activity Description, Activity TimeStamps, Activity Time Limit");
+                writer.WriteLine("Activity Name, Activity Description, Activity TimeStamps(start), Activity TimeStamps(stop), Activity Time Limit");
 
                 foreach(Models.Activity activity in project.Activities)
                 {
-                    writer.WriteLine($"{activity.TaskName}, {activity.TaskDescription}, {activity.TimeStamps}, {activity.TimeLimit}");
+                    writer.WriteLine($"{activity.TaskName}, {activity.TaskDescription}, {activity.TimeStamps[0]}, {activity.TimeStamps[1]}, {activity.TimeLimit}");
                 }
             }
         }
@@ -298,12 +325,23 @@ namespace Taskify_App.App_Controller
             string filePath = $"../../../{EmailID}";
             using (StreamWriter writer = new StreamWriter(filePath))
             {
-                writer.WriteLine("Project Name, Project Category, Activity Name, Activity Description");
+                writer.WriteLine("Project Name, Project Category, Activity Name, Activity Description, Time Stamp(start), Time Stamp(stop)");
                 foreach (Project project in Projects) 
                 {
+                    if (project.Activities.Count == 0)
+                    {
+                        writer.WriteLine($"{project.ProjectName}, {project.ProjectCategory}, - , -, -, -");
+                    }
                     foreach (Models.Activity activity in project.Activities)
                     {
-                        writer.WriteLine($"{project.ProjectName}, {project.ProjectCategory}, {activity.TaskName}, {activity.TaskDescription}");
+                        if (activity.TimeStamps.Count == 0)
+                        {
+                            writer.WriteLine($"{project.ProjectName}, {project.ProjectCategory}, {activity.TaskName}, {activity.TaskDescription}, -, -");
+                        }
+                        foreach (DateTime[] timestamp in activity.TimeStamps)
+                        {
+                            writer.WriteLine($"{project.ProjectName}, {project.ProjectCategory}, {activity.TaskName}, {activity.TaskDescription}, {timestamp[0]}, {timestamp[1]}");
+                        }
                     }
                 }
             }
@@ -322,7 +360,7 @@ namespace Taskify_App.App_Controller
             endDate = DateTime.Parse(endDate.ToString("yyyy-MM-dd"));
             foreach (Project project in Projects)
             {
-                foreach (Activity activity in project.Activities)
+                foreach (Models.Activity activity in project.Activities)
                 {
                     foreach (DateTime[] timeStamp in activity.TimeStamps)
                     {
@@ -379,7 +417,7 @@ namespace Taskify_App.App_Controller
             List<SummaryDetails> summaryDetails = new List<SummaryDetails>();
             foreach (Project project in Projects)
             {
-                foreach (Activity activity in project.Activities)
+                foreach (Models.Activity activity in project.Activities)
                 {
                     if (activity.TimeStamps.Count == 0)
                     {
@@ -410,7 +448,7 @@ namespace Taskify_App.App_Controller
                     continue;
                 }
 
-                foreach (Activity activity in project.Activities)
+                foreach (Models.Activity activity in project.Activities)
                 {
                     foreach (DateTime[] dateTime in activity.TimeStamps)
                     {

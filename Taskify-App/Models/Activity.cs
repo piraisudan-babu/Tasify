@@ -5,6 +5,11 @@
     /// </summary>
     public class Activity
     {
+        /// <summary>
+        /// Unique id of the task.
+        /// </summary>
+        public long TaskID { get; set; }
+
         //public long TaskID { get; set; }
         /// <summary>
         /// Name of the task.
@@ -34,12 +39,14 @@
         /// <summary>
         /// Constructor to initialize all the task details.
         /// </summary>
+        /// <param name="taskID">ID of the task.</param>
         /// <param name="taskName">Name of the task.</param>
         /// <param name="taskDescription">Description of the task.</param>
         /// <param name="timeStamps">List of stop and start timing.</param>
         /// <param name="timeLimit">Time limit of the task.</param>
-        public Activity(string taskName, string taskDescription, List<DateTime[]> timeStamps, float timeLimit)
+        public Activity(long taskID, string taskName, string taskDescription, List<DateTime[]> timeStamps, float timeLimit)
         {
+            TaskID = taskID;
             TaskName = taskName;
             TaskDescription = taskDescription;
             TimeStamps = timeStamps;

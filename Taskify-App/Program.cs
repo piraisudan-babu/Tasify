@@ -15,10 +15,11 @@ public class Program
     {
         UserRepository userRepository = new UserRepository();
         ProjectRepository projectRepository = new ProjectRepository();
+        TaskIDRepository taskIDRepository = new TaskIDRepository();
         AppServices appService = new AppServices(projectRepository);
         AppUI appUI = new AppUI(appService);
         AuthenticatorServices authenticatorServices = new AuthenticatorServices(userRepository,appService);
-        Authenticator authenticator = new Authenticator(authenticatorServices, appUI);
+        Authenticator authenticator = new Authenticator(authenticatorServices, appUI, taskIDRepository);
         authenticator.DisplayAuthenticationMenu();
     }
 }

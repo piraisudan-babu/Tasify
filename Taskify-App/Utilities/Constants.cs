@@ -28,9 +28,9 @@
         public const string EmailNotFound = "Email ID not found!!";
         public const string EmailFound = "Email ID already found!!";
         public const string IncorrectPassword = "Incorrect password!!";
-        public const string InvalidUserName = "Invalid User Name!! User name can't be empty.";
+        public const string InvalidUserName = "Invalid User Name!! User name can't be empty and should contains alphanumeric character.";
         public const string InvalidEmailID = "Invalid Email ID!!";
-        public const string InvalidPassword = "Invalid Password";
+        public const string InvalidPassword = "Weak Password. Pls enter a password that have atleast 8 characters, atleast 1 uppercase, lowercase, number, special character.";
         public const string InvalidName = "Invalid Name!! Name should have atleast 1 character and all should be AlphaNumeric.";
         public const string InvalidTimeLimit = "Invalid Time limit!! Time limit decimal place should not exceed 5 figures. Time limit can be [0,100] range!! Try Again";
         public const string ContinueMessage = "Press any key to continue.";

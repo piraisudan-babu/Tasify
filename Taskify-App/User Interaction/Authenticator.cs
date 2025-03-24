@@ -1,4 +1,5 @@
 ﻿using Taskify_App.Enums;
+using Taskify_App.Repository;
 using Taskify_App.User_Interaction;
 using Taskify_App.Utilities;
 
@@ -11,16 +12,19 @@ namespace Taskify_App
     {
         private AuthenticatorServices _authenticatorServices;
         private AppUI _appUI;
+        private TaskIDRepository _taskIDRepository;
 
         /// <summary>
         /// Constructor to initialize the AuthenticatorService and AppUI objects.
         /// </summary>
         /// <param name="authenticatorServices">AuthenticatorService object</param>
         /// <param name="appUI">AppUI object.</param>
-        public Authenticator(AuthenticatorServices authenticatorServices, AppUI appUI)
+        public Authenticator(AuthenticatorServices authenticatorServices, AppUI appUI, TaskIDRepository taskIDRepository)
         {
             _authenticatorServices = authenticatorServices;
             _appUI = appUI;
+            _taskIDRepository = taskIDRepository;
+            Utils.taskID = _taskIDRepository.GetTaskID();
         }
 
         /// <summary>
@@ -64,6 +68,7 @@ namespace Taskify_App
 
                         case AuthenticationChoice.Exit:
                             Utils.DisplayInConsole(Constants.ExitMessage + Environment.NewLine, ConsoleColor.Yellow);
+                            _taskIDRepository.UpdateTaskID(Utils.taskID);
                             return;
 
                         default:

@@ -8,6 +8,7 @@ using Taskify_App.Utilities;
 /// </summary>
 public static class Utils
 {
+    public static long taskID { get; set; } = 0;
     /// <summary>
     /// Function to display the message in console.
     /// </summary>
@@ -66,7 +67,7 @@ public static class Utils
             if (userName != null)
             {
                 userName = userName.Trim();
-                if (userName != string.Empty && userName.All(letter => Char.IsLetter(letter)))
+                if (userName != string.Empty && userName.All(letter => Char.IsLetter(letter) || char.IsWhiteSpace(letter)))
                 {
                     return userName;
                 }
@@ -253,7 +254,7 @@ public static class Utils
     /// <returns>description.</returns>
     public static string GetDescription(string taskName)
     {
-        DisplayInConsole($"Enter the {taskName} Description : ", ConsoleColor.White);
+        DisplayInConsole($"Enter the {taskName} Description (Optional): ", ConsoleColor.White);
         string? description = Console.ReadLine();
         if (description == null || description.Trim() == string.Empty)
         {
@@ -312,7 +313,11 @@ public static class Utils
         while (true)
         {
             DisplayInConsole("Enter the time limit in Hrs to be update: ", ConsoleColor.White);
-            string input = Console.ReadLine()!;
+            string? input = Console.ReadLine();
+            if (input == null || input == string.Empty)
+            {
+                return -1;
+            }
             var floatParts = input.Split(".");
             if (float.TryParse(input, out var timeLimit) && timeLimit > 0 && timeLimit < 100 && (floatParts.Length == 1 || floatParts.Length > 1 && floatParts[1].Length <= 5))
             {
